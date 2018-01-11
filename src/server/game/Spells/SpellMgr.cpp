@@ -4883,6 +4883,9 @@ void SpellMgr::LoadSpellCustomAttr()
                     spellInfo->AttributesEx2 &= ~SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS;
                     spellInfo->AttributesEx6 &= ~SPELL_ATTR6_CAN_TARGET_INVISIBLE;
                     break;
+		case 42442: // Vengeance Landing Cannonfire
+                    spellInfo->MaxAffectedTargets = 1;
+                    break;    
                 case 125972:// Felin Grace
                     spellInfo->Effects[0].ApplyAuraName = SPELL_AURA_SAFE_FALL;
                     break;
