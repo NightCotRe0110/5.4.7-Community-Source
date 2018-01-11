@@ -145,7 +145,8 @@ enum DruidSpells
     SPELL_TREANT_RESTORATION_SPELL          = 113828,
     SPELL_TREANT_BALANCE_SPELL              = 113769,
     SPELL_DRUID_SAGE_MENDER                 = 144871,
-    SPELL_DRUID_GLYPH_OF_GUIDED_STARS       = 146655
+    SPELL_DRUID_GLYPH_OF_GUIDED_STARS       = 146655,
+    SPELL_DRUID_GLYPH_OF_OMENS		    = 54812
 };
 
 // Tooth and Claw - 135597
@@ -5573,6 +5574,77 @@ class spell_dru_natures_swiftness : public SpellScriptLoader
         }
 };
 
+// Called by Entangling Roots - 339, Cyclone - 33786, Faerie Fire - 770
+// Faerie Swarm - 102355, Mass Entanglement - 102359, Typhoon - 132469
+// Disorienting Roar - 99, Urol's Vortex - 102793 and Mighty Bash - 5211
+// Glyph of Omens - 54812
+class spell_dru_glyph_of_omens : public SpellScriptLoader
+{
+public:
+	spell_dru_glyph_of_omens() : SpellScriptLoader("spell_dru_glyph_of_omens") { }
+
+	class spell_dru_glyph_of_omens_SpellScript : public SpellScript
+	{
+		PrepareSpellScript(spell_dru_glyph_of_omens_SpellScript);
+
+		void HandleOnHit()
+		{
+			if (Player* _player = GetCaster()->ToPlayer())
+			{
+				if (_player->HasAura(SPELL_DRUID_SOLAR_ECLIPSE) || _player->HasAura(SPELL_DRUID_LUNAR_ECLIPSE))
+					return;
+
+				int32 eclipse = 10;
+
+				switch (_player->m_lastEclipseState)
+				{
+				case ECLIPSE_NONE:
+				case ECLIPSE_SOLAR:
+					// If last eclipse is solar, set lunar power ...
+					// .. or if no eclipse since in game, set lunar power
+					_player->SetEclipsePower(int32(_player->GetEclipsePower() - eclipse));
+					break;
+				case ECLIPSE_LUNAR:
+					// If last eclipse is lunar, set solar power
+					_player->SetEclipsePower(int32(_player->GetEclipsePower() + eclipse));
+					break;
+				default:
+					break;
+				}
+
+				if (_player->GetEclipsePower() == 100 && !_player->HasAura(SPELL_DRUID_SOLAR_ECLIPSE))
+				{
+					_player->CastSpell(_player, SPELL_DRUID_SOLAR_ECLIPSE, true, 0); // Cast Solar Eclipse
+					_player->m_lastEclipseState = ECLIPSE_SOLAR;
+					_player->CastSpell(_player, SPELL_DRUID_NATURES_GRACE, true); // Cast Nature's Grace
+					_player->CastSpell(_player, SPELL_DRUID_ECLIPSE_GENERAL_ENERGIZE, true); // Cast Eclipse - Give 35% of POWER_MANA
+				}
+				else if (_player->GetEclipsePower() == -100 && !_player->HasAura(SPELL_DRUID_LUNAR_ECLIPSE))
+				{
+					_player->CastSpell(_player, SPELL_DRUID_LUNAR_ECLIPSE, true, 0); // Cast Lunar Eclipse
+					_player->m_lastEclipseState = ECLIPSE_LUNAR;
+					_player->CastSpell(_player, SPELL_DRUID_NATURES_GRACE, true); // Cast Nature's Grace
+					_player->CastSpell(_player, SPELL_DRUID_ECLIPSE_GENERAL_ENERGIZE, true); // Cast Eclipse - Give 35% of POWER_MANA
+					_player->CastSpell(_player, SPELL_DRUID_LUNAR_ECLIPSE_OVERRIDE, true);
+
+					if (_player->HasSpellCooldown(SPELL_DRUID_STARFALL))
+						_player->RemoveSpellCooldown(SPELL_DRUID_STARFALL, true);
+				}
+			}
+		}
+
+		void Register()
+		{
+			OnHit += SpellHitFn(spell_dru_glyph_of_omens_SpellScript::HandleOnHit);
+		}
+	};
+
+	SpellScript* GetSpellScript() const
+	{
+		return new spell_dru_glyph_of_omens_SpellScript();
+	}
+};
+
 void AddSC_druid_spell_scripts()
 {
     new spell_dru_tooth_and_claw_absorb();
@@ -5660,8 +5732,8 @@ void AddSC_druid_spell_scripts()
     new spell_dru_stampede();
     new spell_dru_savage_roar_powerful();
     new spell_dru_natures_swiftness();
-	new spell_dru_dis_roar();
-
+    new spell_dru_dis_roar();
+    new spell_dru_glyph_of_omens();
     new spell_area_druid_ursols_vortex();
     new spell_dru_dream_of_cenarius_heal();
 }
