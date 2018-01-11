@@ -1012,7 +1012,7 @@ public:
 					if (MotionMaster* motion = CurrentTrasendanceTrigger->GetMotionMaster())
 					{
 						CurrentTrasendanceTrigger->ClearUnitState(UNIT_STATE_ROOT);
-						CurrentTrasendanceTrigger->SetSpeed(MOVE_RUN, 1000.0f, true);
+						CurrentTrasendanceTrigger->SetSpeed(MOVE_RUN, 100.0f, true);
 						motion->MovePoint(1, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
 						CurrentTrasendanceTrigger->SetSpeed(MOVE_RUN, 0.0f, true);
 						CurrentTrasendanceTrigger->AddUnitState(UNIT_STATE_ROOT);
